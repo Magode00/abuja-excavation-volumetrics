@@ -1,0 +1,6 @@
+Method,Bank_Volume_m3,Bulked_Haul_Volume_m3,Exact_Reference_m3,Signed_Error_m3,Abs_Pct_Error,Signed_Pct_Error,Est_Earthwork_Cost_USD,Cost_Discrepancy_USD
+End-Area (Trapezoidal),21372.18,26074.06,21521.96,-149.79,0.696,-0.696,181663.52,-1273.18
+Prismoidal (Simpson 1/3),21521.53,26256.27,21521.96,-0.44,0.002,-0.002,182933.0,-3.7
+Borrow-Pit Grid (1-2-3-4),21372.18,26074.06,21521.96,-149.79,0.696,-0.696,181663.52,-1273.18
+Contour Slicing (1.0m CI),21258.3,25935.13,21521.96,-263.66,1.2251,-1.2251,180695.56,-2241.14
+Delaunay TIN Surface,21373.58,26075.77,21521.96,-148.38,0.6894,-0.6894,181675.45,-1261.25

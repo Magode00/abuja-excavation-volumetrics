@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abuja Deep Excavation Volumetrics — Interactive Geospatial Suite</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --violet: #a78bfa;
+      --rose: #fb7185;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 22px 24px 44px;
+    }
+    .container { max-width: 1320px; margin: 0 auto; }
+    header {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+      gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3); padding: 3px 10px; border-radius: 999px; margin-bottom: 6px;
+    }
+    h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+    .author-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; font-size: 12.5px; text-align: right;
+    }
+    .author-box strong { color: var(--text); display: block; font-size: 13px; }
+    .author-box span { color: var(--muted); }
+
+    .controls {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 18px;
+    }
+    .ctrl label {
+      display: flex; justify-content: space-between; font-size: 12px; color: var(--muted);
+      margin-bottom: 5px; font-weight: 600;
+    }
+    .ctrl label b { color: var(--accent); font-variant-numeric: tabular-nums; }
+    select, input[type="range"], input[type="file"] {
+      width: 100%; accent-color: var(--accent); cursor: pointer;
+    }
+    select {
+      background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+      padding: 6px 8px; border-radius: 6px; font-size: 13px;
+    }
+
+    .kpis {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 18px;
+    }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+    }
+    .kpi .k-label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi .k-val { font-size: 23px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .kpi .k-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .emerald { color: var(--emerald); }
+    .accent { color: var(--accent); }
+    .amber { color: var(--amber); }
+
+    .vis-grid {
+      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; margin-bottom: 18px;
+    }
+    @media (max-width: 960px) { .vis-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px;
+    }
+    .card h2 {
+      font-size: 14px; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .card .hint { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+    canvas { width: 100%; display: block; border-radius: 8px; background: #090e1a; margin-top: 8px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid rgba(51,65,85,0.6); font-variant-numeric: tabular-nums; }
+    th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    td.num, th.num { text-align: right; }
+    tr.best-row { background: rgba(16, 185, 129, 0.09); }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+    }
+    .pill-best { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+    .pill-mid { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; }
+    .pill-high { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+    .csv-bar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted);
+    }
+    button {
+      background: var(--accent); color: #082f49; font-weight: 700; border: none; border-radius: 7px;
+      padding: 7px 13px; font-size: 12.5px; cursor: pointer;
+    }
+    button:hover { opacity: 0.92; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <span class="badge">Geoinformatics &amp; Numerical Engineering Suite</span>
+      <h1>Comparative Volumetric Analysis for Deep Excavation in Abuja, F.C.T.</h1>
+      <p class="subtitle">UTM Zone 32N Central Area Benchmark (332,400 m E, 1,001,800 m N) • Real-Time 3D DEM &amp; Multi-Method Solver</p>
+    </div>
+    <div class="author-box">
+      <strong>Shekwomagode Aaron Tonya Solomon</strong>
+      <span>B.Tech. Surveying &amp; Geoinformatics • FUT Minna</span><br/>
+      <span>Python • MATLAB • Geospatial Computing</span>
+    </div>
+  </header>
+
+  <section class="controls">
+    <div class="ctrl">
+      <label>Survey Grid Interval (Δs) <b id="lblSpacing">2.5 m</b></label>
+      <select id="selSpacing">
+        <option value="1.25">1.25 m Ultra-Dense RTK (49×41 = 2,009 pts)</option>
+        <option value="2.5" selected>2.50 m Standard Grid (25×21 = 525 pts)</option>
+        <option value="5.0">5.00 m Coarse Grid (13×11 = 143 pts)</option>
+        <option value="10.0">10.0 m Reconnaissance Grid (7×6 = 42 pts)</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Section A–A' Northing Y <b id="lblSecY">25.0 m</b></label>
+      <input type="range" id="rngSecY" min="0" max="50" step="2.5" value="25" />
+    </div>
+    <div class="ctrl">
+      <label>Contour Interval (CI) <b id="lblCI">1.0 m</b></label>
+      <select id="selCI">
+        <option value="0.5">0.5 m Fine Contours</option>
+        <option value="1.0" selected>1.0 m Standard Contours</option>
+        <option value="2.0">2.0 m Coarse Contours</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Haulage Rate ($/m³) <b id="lblRate">$8.50</b></label>
+      <input type="range" id="rngRate" min="4" max="20" step="0.5" value="8.5" />
+    </div>
+    <div class="ctrl">
+      <label>Soil Swell Factor <b id="lblSwell">1.22×</b></label>
+      <input type="range" id="rngSwell" min="1.05" max="1.45" step="0.01" value="1.22" />
+    </div>
+  </section>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="k-label">Exact Continuous Reference</div>
+      <div class="k-val accent" id="kpiExact">21,521.96 m³</div>
+      <div class="k-sub" id="kpiStations">525 survey stations evaluated</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Most Accurate Method</div>
+      <div class="k-val emerald" id="kpiBestVol">21,521.53 m³</div>
+      <div class="k-sub" id="kpiBestName">Prismoidal (Simpson 1/3) • -0.002% err</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Prismoidal Correction (End-Area Δ)</div>
+      <div class="k-val amber" id="kpiPrismDiff">+149.35 m³</div>
+      <div class="k-sub">Curvature bias eliminated vs. Trapezoidal</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Bulked Haulage Volume &amp; Cost</div>
+      <div class="k-val" id="kpiCost">$182,933</div>
+      <div class="k-sub" id="kpiBulked">26,256 m³ loose volume (at 1.22× swell)</div>
+    </div>
+  </section>
+
+  <section class="vis-grid">
+    <div class="card">
+      <h2>
+        <span>Interactive 3D Post-Excavation DEM Surface</span>
+        <span class="hint">Drag mouse / touch to rotate 3D mesh • Red line = Section A–A'</span>
+      </h2>
+      <canvas id="cv3d" width="700" height="400"></canvas>
+    </div>
+    <div class="card">
+      <h2>
+        <span>Vertical Cross-Section Profile A–A'</span>
+        <span class="hint" id="profileSub">Pre- vs. Post-Excavation Elevation along X</span>
+      </h2>
+      <canvas id="cvProfile" width="540" height="400"></canvas>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>
+      <span>Quantitative Comparison Across 5 Surveying Volumetric Methods</span>
+      <span class="hint">Benchmark vs. Exact 2D Quadrature Reference</span>
+    </h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Volumetric Method</th>
+            <th> Mathematical Order</th>
+            <th class="num">Bank Volume (m³)</th>
+            <th class="num">Bulked Volume (m³)</th>
+            <th class="num">Signed Error (m³)</th>
+            <th class="num">Relative Accuracy</th>
+            <th class="num">Est. Cost ($ USD)</th>
+            <th class="num">Cost Error ($)</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+    <div class="csv-bar">
+      <div>
+        <strong>Export Current Survey Grid:</strong> Download the active Abuja UTM Zone 32N `(Easting, Northing, Pre_Elev, Post_Elev, Cut_Depth)` survey table as CSV for QGIS, Civil 3D, Python, or MATLAB.
+      </div>
+      <button id="btnDownloadCsv">Download Active Survey Grid (.csv)</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const LX = 60.0, LY = 50.0;
+const ORIGIN_E = 332400.0, ORIGIN_N = 1001800.0;
+const EXACT_VOL = 21521.964;
+
+function preSurface(x, y) {
+  return 476.40 + 0.018 * x + 0.012 * y + 0.22 * Math.sin(Math.PI * x / LX) * Math.cos(Math.PI * y / LY);
+}
+
+function cutDepth(x, y) {
+  const u = (2.0 * x - LX) / LX;
+  const v = (2.0 * y - LY) / LY;
+  const px = Math.max(0.0, 1.0 - Math.pow(u, 4));
+  const py = Math.max(0.0, 1.0 - Math.pow(v, 4));
+  const asym = 1.0 + 0.14 * u - 0.10 * v + 0.08 * (u * u - v * v);
+  const und = 0.55 * Math.cos(1.5 * Math.PI * u) * Math.cos(1.5 * Math.PI * v) * px * py;
+  return Math.max(0.0, 11.20 * px * py * asym + und);
+}
+
+function buildGrid(spacing) {
+  const nx = Math.round(LX / spacing) + 1;
+  const ny = Math.round(LY / spacing) + 1;
+  const xs = Array.from({length: nx}, (_, i) => (LX * i) / (nx - 1));
+  const ys = Array.from({length: ny}, (_, j) => (LY * j) / (ny - 1));
+  const D = [], Zpre = [], Zpost = [];
+  for (let j = 0; j < ny; j++) {
+    const rowD = [], rowPre = [], rowPost = [];
+    for (let i = 0; i < nx; i++) {
+      const zp = preSurface(xs[i], ys[j]);
+      const d = cutDepth(xs[i], ys[j]);
+      rowPre.push(zp);
+      rowD.push(d);
+      rowPost.push(zp - d);
+    }
+    D.push(rowD); Zpre.push(rowPre); Zpost.push(rowPost);
+  }
+  return { xs, ys, D, Zpre, Zpost, nx, ny };
+}
+
+function trapz1D(arr, h) {
+  let s = 0;
+  for (let i = 0; i < arr.length - 1; i++) s += 0.5 * h * (arr[i] + arr[i + 1]);
+  return s;
+}
+
+function simpson1D(arr, h) {
+  const n = arr.length - 1;
+  if (n < 2) return trapz1D(arr, h);
+  if (n % 2 === 0) {
+    let odd = 0, even = 0;
+    for (let i = 1; i < n; i += 2) odd += arr[i];
+    for (let i = 2; i < n; i += 2) even += arr[i];
+    return (h / 3.0) * (arr[0] + arr[n] + 4 * odd + 2 * even);
+  }
+  let odd = 0, even = 0;
+  for (let i = 1; i < n - 1; i += 2) odd += arr[i];
+  for (let i = 2; i < n - 1; i += 2) even += arr[i];
+  return (h / 3.0) * (arr[0] + arr[n - 1] + 4 * odd + 2 * even) + 0.5 * h * (arr[n - 1] + arr[n]);
+}
+
+function computeVolumes(grid, ci) {
+  const { xs, ys, D, nx, ny } = grid;
+  const dx = xs[1] - xs[0], dy = ys[1] - ys[0];
+
+  // 1. End-Area
+  const areasTrap = D.map(row => trapz1D(row, dx));
+  const vEnd = trapz1D(areasTrap, dy);
+
+  // 2. Prismoidal (Simpson 1/3)
+  const areasSimp = D.map(row => simpson1D(row, dx));
+  const vPrism = simpson1D(areasSimp, dy);
+
+  // 3. Borrow-Pit 1-2-3-4
+  let wSum = 0;
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      let w = 0;
+      if (j > 0 && i > 0) w++;
+      if (j > 0 && i < nx - 1) w++;
+      if (j < ny - 1 && i > 0) w++;
+      if (j < ny - 1 && i < nx - 1) w++;
+      wSum += w * D[j][i];
+    }
+  }
+  const vGrid = ((dx * dy) / 4.0) * wSum;
+
+  // 4. Contour slicing (bilinear sub-cell planimetry)
+  let dmax = 0;
+  for (const r of D) for (const v of r) if (v > dmax) dmax = v;
+  const subN = 8;
+  const levels = [];
+  for (let z = 0; z < dmax; z += ci) levels.push(z);
+  levels.push(dmax);
+  const areasC = new Array(levels.length).fill(0);
+  const subArea = (dx * dy) / (subN * subN);
+  for (let j = 0; j < ny - 1; j++) {
+    for (let i = 0; i < nx - 1; i++) {
+      const d00 = D[j][i], d10 = D[j][i+1], d01 = D[j+1][i], d11 = D[j+1][i+1];
+      for (let sj = 0; sj < subN; sj++) {
+        const tv = (sj + 0.5) / subN;
+        for (let si = 0; si < subN; si++) {
+          const tu = (si + 0.5) / subN;
+          const val = (1-tu)*(1-tv)*d00 + tu*(1-tv)*d10 + (1-tu)*tv*d01 + tu*tv*d11;
+          for (let k = 0; k < levels.length; k++) {
+            if (k === 0 ? val > 1e-6 : val >= levels[k]) areasC[k] += subArea;
+          }
+        }
+      }
+    }
+  }
+  let vContour = 0;
+  for (let k = 0; k < levels.length - 1; k++) {
+    const dz = levels[k+1] - levels[k];
+    vContour += (dz / 3.0) * (areasC[k] + areasC[k+1] + Math.sqrt(Math.max(0, areasC[k]*areasC[k+1])));
+  }
+
+  // 5. TIN Surface (diagonal-adaptive triangulation per cell matching Delaunay)
+  let vTin = 0;
+  const triArea = 0.5 * dx * dy;
+  for (let j = 0; j < ny - 1; j++) {
+    for (let i = 0; i < nx - 1; i++) {
+      const a = D[j][i], b = D[j][i+1], c = D[j+1][i], d = D[j+1][i+1];
+      if ((i + j) % 2 === 0) {
+        vTin += triArea * ((a + b + d) / 3.0 + (a + d + c) / 3.0);
+      } else {
+        vTin += triArea * ((a + b + c) / 3.0 + (b + d + c) / 3.0);
+      }
+    }
+  }
+
+  return [
+    { name: "Prismoidal (Simpson 1/3)", order: "O(Δs⁴) Quadratic Cross-Section", vol: vPrism },
+    { name: "Delaunay TIN Surface", order: "O(Δs²) Truncated Tri-Prisms", vol: vTin },
+    { name: "End-Area (Trapezoidal)", order: "O(Δs²) Linear Cross-Section", vol: vEnd },
+    { name: "Borrow-Pit Grid (1-2-3-4)", order: "O(Δs²) Corner-Weight Matrix", vol: vGrid },
+    { name: `Contour Slicing (${ci.toFixed(1)}m CI)`, order: "Planimetric Frustum Slices", vol: vContour },
+  ];
+}
+
+// 3D Interactive Camera State
+let rotZ = -0.68, rotX = 0.62, dragging = false, lastX = 0, lastY = 0;
+let currentGrid = null;
+
+function colorForDepth(d) {
+  const t = Math.min(1, Math.max(0, d / 11.8));
+  const r = Math.round(240 - 215 * t);
+  const g = Math.round(249 - 145 * t);
+  const b = Math.round(180 + 55 * Math.sin(Math.PI * t));
+  return `rgb(${r},${g},${b})`;
+}
+
+function draw3D(grid, secY) {
+  const cv = document.getElementById("cv3d");
+  const ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const { xs, ys, Zpost, D, nx, ny } = grid;
+  const zExag = 2.15;
+  const scale = 6.3;
+
+  function project(x, y, z) {
+    const cx = x - LX / 2, cy = y - LY / 2, cz = (z - 471.0) * zExag;
+    const x1 = cx * Math.cos(rotZ) - cy * Math.sin(rotZ);
+    const y1 = cx * Math.sin(rotZ) + cy * Math.cos(rotZ);
+    const y2 = y1 * Math.cos(rotX) - cz * Math.sin(rotX);
+    const z2 = y1 * Math.sin(rotX) + cz * Math.cos(rotX);
+    return { px: W * 0.5 + x1 * scale, py: H * 0.54 - z2 * scale, depthSort: y2 };
+  }
+
+  const quads = [];
+  for (let j = 0; j < ny - 1; j++) {
+    for (let i = 0; i < nx - 1; i++) {
+      const p0 = project(xs[i], ys[j], Zpost[j][i]);
+      const p1 = project(xs[i+1], ys[j], Zpost[j][i+1]);
+      const p2 = project(xs[i+1], ys[j+1], Zpost[j+1][i+1]);
+      const p3 = project(xs[i], ys[j+1], Zpost[j+1][i]);
+      const dAvg = 0.25 * (D[j][i] + D[j][i+1] + D[j+1][i+1] + D[j+1][i]);
+      quads.push({
+        pts: [p0, p1, p2, p3],
+        sortKey: (p0.depthSort + p1.depthSort + p2.depthSort + p3.depthSort) * 0.25,
+        dAvg
+      });
+    }
+  }
+  quads.sort((a, b) => b.sortKey - a.sortKey);
+
+  for (const q of quads) {
+    ctx.beginPath();
+    ctx.moveTo(q.pts[0].px, q.pts[0].py);
+    ctx.lineTo(q.pts[1].px, q.pts[1].py);
+    ctx.lineTo(q.pts[2].px, q.pts[2].py);
+    ctx.lineTo(q.pts[3].px, q.pts[3].py);
+    ctx.closePath();
+    ctx.fillStyle = colorForDepth(q.dAvg);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(15, 23, 42, 0.36)";
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
+
+  // Highlight Section A-A' slice across 3D mesh
+  let bestJ = 0;
+  for (let j = 0; j < ny; j++) {
+    if (Math.abs(ys[j] - secY) < Math.abs(ys[bestJ] - secY)) bestJ = j;
+  }
+  ctx.beginPath();
+  for (let i = 0; i < nx; i++) {
+    const p = project(xs[i], ys[bestJ], Zpost[bestJ][i] + 0.12);
+    if (i === 0) ctx.moveTo(p.px, p.py); else ctx.lineTo(p.px, p.py);
+  }
+  ctx.strokeStyle = "#fb7185";
+  ctx.lineWidth = 2.8;
+  ctx.stroke();
+
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(`Vertical Exaggeration: 2.15× | Section A–A' at Y = ${ys[bestJ].toFixed(2)} m`, 14, H - 14);
+}
+
+function drawProfile(grid, secY) {
+  const cv = document.getElementById("cvProfile");
+  const ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const { xs, ys, Zpre, Zpost, D, nx, ny } = grid;
+  let j = 0;
+  for (let k = 0; k < ny; k++) if (Math.abs(ys[k] - secY) < Math.abs(ys[j] - secY)) j = k;
+
+  const pad = { l: 54, r: 22, t: 28, b: 44 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const zMin = 463.5, zMax = 479.0;
+
+  const sx = x => pad.l + (x / LX) * pw;
+  const sy = z => pad.t + (1 - (z - zMin) / (zMax - zMin)) * ph;
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(51,65,85,0.5)";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "11px sans-serif";
+  for (let z = 464; z <= 478; z += 2) {
+    ctx.beginPath(); ctx.moveTo(pad.l, sy(z)); ctx.lineTo(W - pad.r, sy(z)); ctx.stroke();
+    ctx.fillText(`${z} m`, 10, sy(z) + 4);
+  }
+  for (let x = 0; x <= 60; x += 10) {
+    ctx.beginPath(); ctx.moveTo(sx(x), pad.t); ctx.lineTo(sx(x), H - pad.b); ctx.stroke();
+    ctx.fillText(`${x}m`, sx(x) - 10, H - 16);
+  }
+
+  // Shaded excavated cut zone
+  ctx.beginPath();
+  for (let i = 0; i < nx; i++) {
+    const px = sx(xs[i]), py = sy(Zpre[j][i]);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  for (let i = nx - 1; i >= 0; i--) {
+    ctx.lineTo(sx(xs[i]), sy(Zpost[j][i]));
+  }
+  ctx.closePath();
+  ctx.fillStyle = "rgba(56, 189, 248, 0.22)";
+  ctx.fill();
+
+  // Natural ground line
+  ctx.beginPath();
+  for (let i = 0; i < nx; i++) {
+    if (i === 0) ctx.moveTo(sx(xs[i]), sy(Zpre[j][i])); else ctx.lineTo(sx(xs[i]), sy(Zpre[j][i]));
+  }
+  ctx.strokeStyle = "#10b981"; ctx.lineWidth = 2.2; ctx.stroke();
+
+  // Post-excavation line
+  ctx.beginPath();
+  for (let i = 0; i < nx; i++) {
+    if (i === 0) ctx.moveTo(sx(xs[i]), sy(Zpost[j][i])); else ctx.lineTo(sx(xs[i]), sy(Zpost[j][i]));
+  }
+  ctx.strokeStyle = "#fb7185"; ctx.lineWidth = 2.4; ctx.stroke();
+
+  const areaSec = simpson1D(D[j], xs[1] - xs[0]);
+  const maxD = Math.max(...D[j]);
+  document.getElementById("profileSub").textContent =
+    `Y = ${ys[j].toFixed(2)} m • Section Cut Area = ${areaSec.toFixed(1)} m² • Max Cut = ${maxD.toFixed(2)} m`;
+
+  ctx.fillStyle = "#10b981"; ctx.fillText("● Natural Ground Surface", pad.l + 8, pad.t + 16);
+  ctx.fillStyle = "#fb7185"; ctx.fillText("● Excavated Design Floor", pad.l + 175, pad.t + 16);
+}
+
+function updateAll() {
+  const spacing = parseFloat(document.getElementById("selSpacing").value);
+  const secY = parseFloat(document.getElementById("rngSecY").value);
+  const ci = parseFloat(document.getElementById("selCI").value);
+  const rate = parseFloat(document.getElementById("rngRate").value);
+  const swell = parseFloat(document.getElementById("rngSwell").value);
+
+  document.getElementById("lblSpacing").textContent = `${spacing.toFixed(2)} m`;
+  document.getElementById("lblSecY").textContent = `${secY.toFixed(1)} m`;
+  document.getElementById("lblCI").textContent = `${ci.toFixed(1)} m`;
+  document.getElementById("lblRate").textContent = `$${rate.toFixed(2)}`;
+  document.getElementById("lblSwell").textContent = `${swell.toFixed(2)}×`;
+
+  currentGrid = buildGrid(spacing);
+  const rows = computeVolumes(currentGrid, ci);
+
+  let best = rows[0];
+  for (const r of rows) {
+    if (Math.abs(r.vol - EXACT_VOL) < Math.abs(best.vol - EXACT_VOL)) best = r;
+  }
+  const endRow = rows.find(r => r.name.startsWith("End-Area"));
+  const prismRow = rows.find(r => r.name.startsWith("Prismoidal"));
+
+  document.getElementById("kpiStations").textContent =
+    `${currentGrid.nx * currentGrid.ny} survey stations (${currentGrid.nx}×${currentGrid.ny})`;
+  document.getElementById("kpiBestVol").textContent = `${best.vol.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})} m³`;
+  const bestPct = ((best.vol - EXACT_VOL) / EXACT_VOL) * 100;
+  document.getElementById("kpiBestName").textContent = `${best.name} (${bestPct >= 0 ? "+" : ""}${bestPct.toFixed(3)}%)`;
+
+  const pDiff = prismRow.vol - endRow.vol;
+  document.getElementById("kpiPrismDiff").textContent = `${pDiff >= 0 ? "+" : ""}${pDiff.toFixed(2)} m³`;
+  document.getElementById("kpiCost").textContent = `$${Math.round(prismRow.vol * rate).toLocaleString("en-US")}`;
+  document.getElementById("kpiBulked").textContent =
+    `${Math.round(prismRow.vol * swell).toLocaleString("en-US")} m³ loose haul volume`;
+
+  const tbody = document.getElementById("tblBody");
+  tbody.innerHTML = "";
+  for (const r of rows) {
+    const err = r.vol - EXACT_VOL;
+    const pct = (err / EXACT_VOL) * 100;
+    const absPct = Math.abs(pct);
+    const pillCls = absPct < 0.1 ? "pill-best" : (absPct < 1.0 ? "pill-mid" : "pill-high");
+    const tr = document.createElement("tr");
+    if (r === best) tr.className = "best-row";
+    tr.innerHTML = `
+      <td><strong>${r.name}</strong></td>
+      <td style="color:#94a3b8">${r.order}</td>
+      <td class="num">${r.vol.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td class="num">${(r.vol * swell).toLocaleString("en-US", {minimumFractionDigits:1, maximumFractionDigits:1})}</td>
+      <td class="num">${err >= 0 ? "+" : ""}${err.toFixed(2)}</td>
+      <td class="num"><span class="pill ${pillCls}">${pct >= 0 ? "+" : ""}${pct.toFixed(3)}%</span></td>
+      <td class="num">$${(r.vol * rate).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+      <td class="num">${err * rate >= 0 ? "+" : "-"}$${Math.abs(err * rate).toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  draw3D(currentGrid, secY);
+  drawProfile(currentGrid, secY);
+}
+
+const cv3d = document.getElementById("cv3d");
+cv3d.addEventListener("pointerdown", e => { dragging = true; lastX = e.clientX; lastY = e.clientY; cv3d.setPointerCapture(e.pointerId); });
+cv3d.addEventListener("pointermove", e => {
+  if (!dragging || !currentGrid) return;
+  rotZ += (e.clientX - lastX) * 0.011;
+  rotX = Math.max(0.18, Math.min(1.25, rotX + (e.clientY - lastY) * 0.009));
+  lastX = e.clientX; lastY = e.clientY;
+  draw3D(currentGrid, parseFloat(document.getElementById("rngSecY").value));
+});
+cv3d.addEventListener("pointerup", () => { dragging = false; });
+
+for (const id of ["selSpacing", "rngSecY", "selCI", "rngRate", "rngSwell"]) {
+  document.getElementById(id).addEventListener("input", updateAll);
+}
+
+document.getElementById("btnDownloadCsv").addEventListener("click", () => {
+  if (!currentGrid) return;
+  const lines = ["Point_ID,Easting_m,Northing_m,Local_X_m,Local_Y_m,Pre_Elev_m,Post_Elev_m,Cut_Depth_m"];
+  let idx = 1;
+  for (let j = 0; j < currentGrid.ny; j++) {
+    for (let i = 0; i < currentGrid.nx; i++) {
+      lines.push([
+        `ABJ-${String(idx++).padStart(4, "0")}`,
+        (ORIGIN_E + currentGrid.xs[i]).toFixed(3),
+        (ORIGIN_N + currentGrid.ys[j]).toFixed(3),
+        currentGrid.xs[i].toFixed(3),
+        currentGrid.ys[j].toFixed(3),
+        currentGrid.Zpre[j][i].toFixed(4),
+        currentGrid.Zpost[j][i].toFixed(4),
+        currentGrid.D[j][i].toFixed(4)
+      ].join(","));
+    }
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "abuja_deep_excavation_survey.csv";
+  a.click();
+});
+
+updateAll();
+</script>
+</body>
+</html>

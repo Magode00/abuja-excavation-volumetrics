@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abuja-excavation-volumetrics"
+version = "1.0.0"
+description = "Comparative Analysis of Surveying & Geoinformatics Volumetric Methods for Deep Excavation in Abuja, F.C.T."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
